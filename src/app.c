@@ -159,6 +159,7 @@ void APP_Tasks ( void )
 {
     /* Check the application's current state. */
     int resend=0;
+    portBASE_TYPE xStatus;
     SIGNAL_MSG signal_msg;
     ADC_MSG adc_msg;
     LF_MSG lf_msg;
@@ -236,11 +237,13 @@ void APP_Tasks ( void )
 
              // Block until callback function sends to this queue (read completed)
             unsigned char waitBuf;
-            if(xQueueReceive(appData.blockQueue, &waitBuf, 100));//wait 100 ticks
-            else resend = 1;
-                
-            
-
+            xStatus = xQueueReceive(appData.blockQueue, &waitBuf, 100);//wait 100 ticks
+            if(xStatus == pdTRUE){
+                resend = 0;
+            }
+            else{
+                resend = 1;
+            }
             // Switch to sending to the nav thread
             appData.state = APP_STATE_USART_REQUEST_WRITE;
             
@@ -250,14 +253,12 @@ void APP_Tasks ( void )
         case APP_STATE_USART_REQUEST_WRITE:
         {
             dbgOutputLoc(0x05);
-            
-            //char msg[] = {'\r', '\n', 'R', 'X', 'D', ' '};
-            
-            if(appData.app1Read[0] != 2){ //indicates checksum is wrong
+                        
+            if(appData.app1Read[0] != 2){ //indicates checksum is wrong, was !=2
                 //resend old message somehow
                 resend=1;
             } 
-            //resend = 1;
+            
             if(resend == 1){
                 //signal_msg = createSignalMsg(MSG_SUBJECT_SIGNAL,MSG_ADDR_R1_NAV_TH,
                 //        MSG_ADDR_R2_NAV_TH,MSG_SIG_TURN_LEFT);
@@ -268,11 +269,15 @@ void APP_Tasks ( void )
                         MSG_ADDR_R2_NAV_TH,'X','Z','X');
                 packLFMsg(msg_buffer,lf_msg);
                 DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg_buffer, 15); //changed this line to send rec'd message
-
+                resend = 0;
             }
-            if(resend = 0){
-                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),appData.app1Read, 15); //changed this line to send rec'd message
+            else if(resend == 0){
+                lf_msg = createLFMsg(MSG_SUBJECT_LINE_FOLLOWER_DATA,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,'A','B','C');
+                packLFMsg(msg_buffer,lf_msg);
+                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg_buffer, 15); //changed this line to send rec'd message
             }
+            
             resend = 0;
             
             // Block until callback function sends to this queue (write completed)
@@ -288,9 +293,6 @@ void APP_Tasks ( void )
         case APP_STATE_ERR:
         {
             dbgOutputErr();
-            //char msg[] = {'\r', '\n', 'X', 'X', 'X', ' '};
-
-            //DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg, 6); //changed this line to send rec'd message
 
             break;
         }
