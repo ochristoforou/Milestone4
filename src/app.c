@@ -193,30 +193,30 @@ void APP_Tasks ( void )
             
             
             //UNCOMMENT FOR SIGNAL
-
-            //signal_msg = createSignalMsg(MSG_SUBJECT_SIGNAL,MSG_ADDR_R1_NAV_TH,
-            //        MSG_ADDR_R2_NAV_TH,MSG_SIG_GO_STRAIGHT); //SUBJ, FROM, TO, SIGNAL
-            //packSignalMsg(msg_buffer, signal_msg); //makes msg_buffer the message above
-            //DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 9);  
-
+            /*
+            signal_msg = createSignalMsg(MSG_SUBJECT_SIGNAL,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,MSG_SIG_GO_STRAIGHT); //SUBJ, FROM, TO, SIGNAL
+            packSignalMsg(msg_buffer, signal_msg); //makes msg_buffer the message above
+            DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);  
+            */  
 
             //UNCOMMENT HERE FOR TEST ADC
-            
-            //adc_msg = createADCMsg(MSG_SUBJECT_ADC_DATA,MSG_ADDR_R1_NAV_TH,
-            //        MSG_ADDR_R2_NAV_TH,'A','C'); 
+            /*
+            adc_msg = createADCMsg(MSG_SUBJECT_ADC_DATA,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,'A','C'); 
             //SUBJ, FROM, TO, FRONT, LEFT, RIGHT
-            //packADCMsg(msg_buffer, adc_msg);
-            //DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);  //16 for adc
-
+            packADCMsg(msg_buffer, adc_msg);
+            DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);  //16 for adc
+             */
             
             //UNCOMMENT FOR TEST LFM
-
+            
             lf_msg = createLFMsg(MSG_SUBJECT_LINE_FOLLOWER_DATA,MSG_ADDR_R1_NAV_TH,
                     MSG_ADDR_R2_NAV_TH,'A','B','C');
             packLFMsg(msg_buffer,lf_msg);
             length = 15;
-            DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 15);  //15 for lf
-
+            DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);  //16 for lf
+             
             
              // Block until callback function sends to this queue (write completed)
             unsigned char waitBuf;
@@ -233,7 +233,7 @@ void APP_Tasks ( void )
         {
             dbgOutputLoc(0x03);
             
-            DRV_USART_BufferAddRead(appData.app1USARTHandle, &(appData.app1BufferHandle), &(appData.app1Read), 15); //read max bytes 
+            DRV_USART_BufferAddRead(appData.app1USARTHandle, &(appData.app1BufferHandle), &(appData.app1Read), 16); //read max bytes 
 
              // Block until callback function sends to this queue (read completed)
             unsigned char waitBuf;
@@ -260,22 +260,47 @@ void APP_Tasks ( void )
             } 
             
             if(resend == 1){
-                //signal_msg = createSignalMsg(MSG_SUBJECT_SIGNAL,MSG_ADDR_R1_NAV_TH,
-                //        MSG_ADDR_R2_NAV_TH,MSG_SIG_TURN_LEFT);
-                //packSignalMsg(msg_buffer, signal_msg); //makes msg_buffer the message above
-
-                //adc_msg = adc_msg;
+                /*
+                signal_msg = createSignalMsg(MSG_SUBJECT_SIGNAL,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,MSG_SIG_GO_STRAIGHT); //SUBJ, FROM, TO, SIGNAL
+                packSignalMsg(msg_buffer, signal_msg); //makes msg_buffer the message above
+                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);
+                 */
+                /*
+                adc_msg = createADCMsg(MSG_SUBJECT_ADC_DATA,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,'B','B'); 
+                 //SUBJ, FROM, TO, FRONT, LEFT, RIGHT
+                packADCMsg(msg_buffer, adc_msg);
+                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);  //16 for adc
+                */
+                
                 lf_msg = createLFMsg(MSG_SUBJECT_LINE_FOLLOWER_DATA,MSG_ADDR_R1_NAV_TH,
                         MSG_ADDR_R2_NAV_TH,'X','Z','X');
                 packLFMsg(msg_buffer,lf_msg);
-                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg_buffer, 15); //changed this line to send rec'd message
+                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg_buffer, 16); //changed this line to send rec'd message
+                 
                 resend = 0;
+                 
             }
             else if(resend == 0){
+                /*
+                signal_msg = createSignalMsg(MSG_SUBJECT_SIGNAL,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,MSG_SIG_TURN_RIGHT); //SUBJ, FROM, TO, SIGNAL
+                packSignalMsg(msg_buffer, signal_msg); //makes msg_buffer the message above
+                */
+                
                 lf_msg = createLFMsg(MSG_SUBJECT_LINE_FOLLOWER_DATA,MSG_ADDR_R1_NAV_TH,
                     MSG_ADDR_R2_NAV_TH,'A','B','C');
                 packLFMsg(msg_buffer,lf_msg);
-                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg_buffer, 15); //changed this line to send rec'd message
+                 
+                /*
+                adc_msg = createADCMsg(MSG_SUBJECT_ADC_DATA,MSG_ADDR_R1_NAV_TH,
+                    MSG_ADDR_R2_NAV_TH,'A','C'); 
+                //SUBJ, FROM, TO, FRONT, LEFT, RIGHT
+                packADCMsg(msg_buffer, adc_msg);
+                */
+                  
+                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),msg_buffer, 16); //changed this line to send rec'd message
             }
             
             resend = 0;

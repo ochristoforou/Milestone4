@@ -31,7 +31,14 @@ void packSignalMsg(unsigned char *buffer, SIGNAL_MSG message){
   buffer[5] = (unsigned char)((shiftBuffer >> 16) & 0xFF);
   buffer[6] = (unsigned char)((shiftBuffer >> 24) & 0xFF);  
   buffer[7] = message.signal;
-  buffer[8] = 0x03; //end-of-text
+  buffer[8] = 0x00;
+  buffer[9] = 0x00;
+  buffer[10] = 0x00;
+  buffer[11] = 0x00;
+  buffer[12] = 0x00;
+  buffer[13] = 0x00;
+  buffer[14] = 0x00;
+  buffer[15] = 0x03; //end-of-text
   
 }
 
@@ -172,7 +179,8 @@ void packLFMsg(unsigned char *buffer, LF_MSG message){
   buffer[11] = message.frontSensor;
   buffer[12] = message.leftSensor;
   buffer[13] = message.rightSensor;
-  buffer[14] = 0x03;
+  buffer[14] = 0x00;
+  buffer[15] = 0x03;
 }
 
 LF_MSG unpackLFMsg(unsigned long long *buffer, int *status){
