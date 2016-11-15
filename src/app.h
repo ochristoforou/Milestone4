@@ -135,6 +135,8 @@ typedef struct
     
     /* Queue for message passing to task1 */
     QueueHandle_t task1queue;
+    QueueHandle_t blockQueue;
+
 
 } APP_DATA;
 

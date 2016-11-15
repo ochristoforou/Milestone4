@@ -115,6 +115,8 @@ void APP_Initialize ( void )
 
     /* Initialize the task1queue */
     appData.task1queue = xQueueCreate(1, sizeof(unsigned char));
+    appData.blockQueue = xQueueCreate(1, sizeof(unsigned char));
+
     
     /* Initialize USART communication */
     appData.app1USARTHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE);
@@ -214,30 +216,16 @@ void APP_Tasks ( void )
             length = 15;
             DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 15);  //15 for lf
 
-           
             
-           /* 
-            if(msg_buffer[1] == MSG_SUBJECT_SIGNAL){
-                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 9);  //9 for signal
-            }
-            if(msg_buffer[1] == MSG_SUBJECT_ADC_DATA){
-                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 16);  //16 for adc
-            }
-            if(msg_buffer[1] == MSG_SUBJECT_LINE_FOLLOWER_DATA){
-                DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle), msg_buffer, 15);  //16 for lf
-            }
-             */
-            
-            appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
-            
-            break;
-        }
+             // Block until callback function sends to this queue (write completed)
+            unsigned char waitBuf;
+            xQueueReceive(appData.blockQueue, &waitBuf, portMAX_DELAY);
 
-        case APP_STATE_WAIT_FOR_WRITE_COMPLETE:
-        {
-            dbgOutputLoc(0x02);
-            // do nothing
+            // Switch to read state
+            appData.state = APP_STATE_USART_REQUEST_READ;
+            
             break;
+
         }
         
         case APP_STATE_USART_REQUEST_READ:
@@ -246,15 +234,13 @@ void APP_Tasks ( void )
             
             DRV_USART_BufferAddRead(appData.app1USARTHandle, &(appData.app1BufferHandle), &(appData.app1Read), 15); //read max bytes 
 
-            appData.state = APP_STATE_WAIT_FOR_READ_COMPLETE;
+             // Block until callback function sends to this queue (read completed)
+            unsigned char waitBuf;
+            xQueueReceive(appData.blockQueue, &waitBuf, portMAX_DELAY);
+
+            // Switch to sending to the nav thread
+            appData.state = APP_STATE_USART_REQUEST_WRITE;
             
-            break;
-        }
-        
-        case APP_STATE_WAIT_FOR_READ_COMPLETE:
-        {
-            dbgOutputLoc(0x04);
-            // do nothing
             break;
         }
         
@@ -285,8 +271,14 @@ void APP_Tasks ( void )
                 DRV_USART_BufferAddWrite(appData.app1USARTHandle, &(appData.app1BufferHandle),appData.app1Read, 15); //changed this line to send rec'd message
             }
             resend = 0;
-            appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
             
+            // Block until callback function sends to this queue (write completed)
+            unsigned char waitBuf;
+            xQueueReceive(appData.blockQueue, &waitBuf, portMAX_DELAY);
+
+            // switch to request read state
+            appData.state = APP_STATE_USART_REQUEST_READ;
+
             break;
         }
         
@@ -314,19 +306,15 @@ void APP_USARTBufferEventHandler(DRV_USART_BUFFER_EVENT event,
     {
         switch(event)
         {
-            case DRV_USART_BUFFER_EVENT_COMPLETE:
-                if (appData.state == APP_STATE_WAIT_FOR_WRITE_COMPLETE)
-                {
-                    appData.state = APP_STATE_USART_REQUEST_READ;
-                }
-                else if (appData.state == APP_STATE_WAIT_FOR_READ_COMPLETE)
-                {
-                    appData.state = APP_STATE_USART_REQUEST_WRITE;
-                }
+            case DRV_USART_BUFFER_EVENT_COMPLETE: ; // empty statement
+
+                unsigned char garbage = 'g';
+                xQueueSendFromISR(appData.blockQueue, &garbage, NULL);
+
                 break;
 
             case DRV_USART_BUFFER_EVENT_ERROR:
-                appData.state = APP_STATE_ERR;
+                appData.state = -1;
                 break;
 
             default:
