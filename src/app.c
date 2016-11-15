@@ -236,7 +236,10 @@ void APP_Tasks ( void )
 
              // Block until callback function sends to this queue (read completed)
             unsigned char waitBuf;
-            xQueueReceive(appData.blockQueue, &waitBuf, portMAX_DELAY);
+            if(xQueueReceive(appData.blockQueue, &waitBuf, 100));//wait 100 ticks
+            else resend = 1;
+                
+            
 
             // Switch to sending to the nav thread
             appData.state = APP_STATE_USART_REQUEST_WRITE;
